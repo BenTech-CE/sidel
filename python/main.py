@@ -1,6 +1,15 @@
 # 1. Import the InferencePipeline library
 from inference import InferencePipeline
 import cv2
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+api_key = os.getenv("ROBOFLOW_API_KEY")
+
+if not api_key:
+    raise ValueError("A ROBOFLOW_API_KEY não foi encontrada! Verifique o arquivo .env")
 
 def my_sink(result, video_frame):
     if result.get("output_image"): # Display an image from the workflow response
@@ -12,10 +21,10 @@ def my_sink(result, video_frame):
 
 # 2. Initialize a pipeline object
 pipeline = InferencePipeline.init_with_workflow(
-    api_key="",
+    api_key="w1qWCxAZc2xIPWAUKKet",
     workspace_name="bentech",
     workflow_id="detect-count-and-visualize",
-    video_reference=0, # Path to video, device id (int, usually 0 for built in webcams), or RTSP stream url
+    video_reference="rtsp://admin:123456@192.168.40.151:8554/profile0", # Path to video, device id (int, usually 0 for built in webcams), or RTSP stream url
     max_fps=30,
     on_prediction=my_sink
 )
