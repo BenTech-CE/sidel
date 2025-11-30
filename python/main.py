@@ -21,11 +21,11 @@ def my_sink(result, video_frame):
 
 # 2. Initialize a pipeline object
 pipeline = InferencePipeline.init_with_workflow(
-    api_key="w1qWCxAZc2xIPWAUKKet",
+    api_key=api_key,
     workspace_name="bentech",
     workflow_id="detect-count-and-visualize",
-    video_reference="rtsp://admin:123456@192.168.40.151:8554/profile0", # Path to video, device id (int, usually 0 for built in webcams), or RTSP stream url
-    max_fps=30,
+    video_reference=0, # Path to video, device id (int, usually 0 for built in webcams), or RTSP stream url
+    max_fps=24,
     on_prediction=my_sink
 )
 
