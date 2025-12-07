@@ -1,61 +1,101 @@
 from inference import InferencePipeline
 import cv2
 import os
+import base64
 import numpy as np
 from collections import Counter
 from dotenv import load_dotenv
+import socketio
 
 load_dotenv()
 
 api_key = os.getenv("ROBOFLOW_API_KEY")
-
-# --- CONFIGURAÇÕES ---
-# Defina como False para rodar em "background" (sem janela)
-MOSTRAR_JANELA = False 
-# ---------------------
+socket_server_url = os.getenv("SOCKET_SERVER_URL", "http://localhost:3000")
 
 if not api_key:
     raise ValueError("A ROBOFLOW_API_KEY não foi encontrada! Verifique o arquivo .env")
+
+# Initialize Socket.IO client
+sio = socketio.Client()
+
+@sio.event
+def connect():
+    print(f"✅ Conectado ao servidor Socket.IO: {socket_server_url}")
+
+@sio.event
+def disconnect():
+    print("❌ Desconectado do servidor Socket.IO")
+
+@sio.event
+def connect_error(data):
+    print(f"⚠️ Erro de conexão Socket.IO: {data}")
+
+# Connect to Socket.IO server
+try:
+    sio.connect(socket_server_url)
+except Exception as e:
+    print(f"⚠️ Não foi possível conectar ao servidor Socket.IO: {e}")
+    print("Continuando sem envio de dados via socket...")
 
 pipeline = None
 
 def my_sink(result, video_frame):
     global pipeline
     
-    # --- 1. Lógica de Print Humanamente Legível ---
     predictions = result.get("predictions")
+    detection_data = {
+        "detected": False,
+        "count": 0,
+        "objects": [],
+        "summary": {}
+    }
     
-    # Verifica se há detecções
+    # Process detections
     if predictions and len(predictions.class_id) > 0:
         count = len(predictions.class_id)
-        
-        # Tenta pegar os nomes das classes (ex: 'person', 'car')
-        # O objeto predictions.data['class_name'] é um array numpy
         class_names = predictions.data.get("class_name", [])
         
+        detection_data["detected"] = True
+        detection_data["count"] = count
+        
         if len(class_names) > 0:
-            # Conta quantas de cada (ex: {'person': 2, 'car': 1})
             resumo = dict(Counter(class_names))
+            detection_data["summary"] = resumo
+            detection_data["objects"] = list(class_names)
             resumo_str = ", ".join([f"{qtd} {nome}" for nome, qtd in resumo.items()])
             print(f"✅ Detectado: {count} objetos ({resumo_str})")
         else:
-            # Caso não venha o nome da classe, mostra apenas IDs
+            detection_data["objects"] = list(predictions.class_id)
             print(f"✅ Detectado: {count} objetos (IDs: {predictions.class_id})")
-    else:
-        # Opcional: printar um ponto ou nada para não poluir o terminal quando vazio
-        print(".", end="", flush=True) 
+    #else:
+    #    print(".", end="", flush=True)
+    
+    # Encode image to base64 and send via Socket.IO
+    if sio.connected:
+        try:
+            image_data = None
+            
+            # Try to get output image with annotations
+            if result.get("output_image"):
+                img = result["output_image"].numpy_image
+                _, buffer = cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 80])
+                image_data = base64.b64encode(buffer).decode('utf-8')
+            # Fallback to original frame
+            elif video_frame is not None:
+                img = video_frame.image
+                _, buffer = cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 80])
+                image_data = base64.b64encode(buffer).decode('utf-8')
+            
+            # Send data to server
+            payload = {
+                "image": image_data,
+                "detection": detection_data
+            }
 
-    # --- 2. Lógica da Janela (Toggle) ---
-    if MOSTRAR_JANELA:
-        if result.get("output_image"): 
-            cv2.imshow("Workflow Image", result["output_image"].numpy_image)
-            k = cv2.waitKey(1)
-
-            if k == 27:  # ESC para sair
-                cv2.destroyAllWindows()
-                print("\nComando de saída recebido. Parando pipeline...")
-                if pipeline:
-                    pipeline.terminate()
+            sio.emit("detection_data", payload)
+            
+        except Exception as e:
+            print(f"⚠️ Erro ao enviar dados: {e}")
 
 # 2. Initialize pipeline
 pipeline = InferencePipeline.init_with_workflow(
@@ -73,15 +113,16 @@ pipeline = InferencePipeline.init_with_workflow(
 
 # 3. Start
 print("Iniciando processamento...")
-if not MOSTRAR_JANELA:
-    print("Modo silencioso ativado. Pressione Ctrl+C no terminal para parar.")
+print("Pressione Ctrl+C no terminal para parar.")
 
 try:
     pipeline.start()
     pipeline.join()
 except KeyboardInterrupt:
-    # Captura o Ctrl+C caso a janela esteja desligada
-    print("\nCtrl+C detectado. Parando...")
+    print("\nParando...")
     pipeline.terminate()
+finally:
+    if sio.connected:
+        sio.disconnect()
 
-print("Programa finalizado.")
+print("Detecção finalizada.")

@@ -1,2 +1,3 @@
 inference
 python-dotenv
+python-socketio
