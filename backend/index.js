@@ -4,7 +4,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const jwt = require("jsonwebtoken");
+const session = require("express-session");
 
 const authCheck = require("./middleware/auth");
 
@@ -17,69 +17,92 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const URI_MONGODB_CONNECTION = process.env.URI_MONGODB_CONNECTION
+const URI_MONGODB_CONNECTION = process.env.URI_MONGODB_CONNECTION;
 const JWT_SECRET = process.env.JWT_SECRET;
 
-mongoose.connect(URI_MONGODB_CONNECTION)
-  .then(() => console.log("MongoDB conectado!"))
-  .catch((e) => console.log("Ocorreu um erro ao conectar com o MongoDB: ", e))
+app.use(
+  session({
+    secret: JWT_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 24 * 60 * 60 * 1000,
+    },
+  })
+);
 
-const User = mongoose.model("User", UserSchema)
-const Alert = mongoose.model("Alert", AlertSchema)
-const Settings = mongoose.model("Settings", SettingsSchema)
+mongoose
+  .connect(URI_MONGODB_CONNECTION)
+  .then(() => console.log("MongoDB conectado!"))
+  .catch((e) => console.log("Ocorreu um erro ao conectar com o MongoDB: ", e));
+
+const User = mongoose.model("User", UserSchema);
+const Alert = mongoose.model("Alert", AlertSchema);
+const Settings = mongoose.model("Settings", SettingsSchema);
 
 Settings.findOne().then(async (data) => {
   if (!data) {
     await Settings.create({});
-    console.log("Settings padrão criados")
+    console.log("Settings padrão criados");
   }
-})
+});
 
 // AUTH
 
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email })
+  const user = await User.findOne({ email });
   if (!user) return res.status(400).json({ error: "Usuário não encontrado" });
 
   const ok = await bcrypt.compare(password, user.password);
   if (!ok) return res.status(400).json({ error: "Senha inválida" });
 
-  const token = jwt.sign({ id: user._id, email }, JWT_SECRET, {
-    expiresIn: "1d"
-  })
+  req.session.user = {
+    id: user._id,
+    email: user.email,
+  };
 
-  res.status(201).token({ token })
-})
+  res
+    .status(201)
+    .json({ message: "Login realizado com sucesso", user: req.session.user });
+});
+
+app.post("/logout", authCheck, async (req, res) => {
+  req.session.destroy((err) => {
+    if (err) return res.status(500).json({ error: "Erro ao fazer logout" });
+
+    res.status(201).json({ message: "Logout realizado com sucesso" });
+  });
+});
 
 // ALERTS HISTORY
 
 app.get("/alerts", authCheck, async (req, res) => {
   const alerts = await Alert.find().sort({ timestamp: -1 });
-  res.status(200).json(alerts)
-})
+  res.status(200).json(alerts);
+});
 
 app.post("/alerts", authCheck, async (req, res) => {
   const alert = await Alert.create().sort(req.body);
-  res.status(201).json(alert)
-})
+  res.status(201).json(alert);
+});
 
 // SETTINGS
 
 app.get("/settings", authCheck, async (req, res) => {
   const settings = await Alert.fondOne();
-  res.status(200).json(settings)
-})
+  res.status(200).json(settings);
+});
 
 app.post("/settings", authCheck, async (req, res) => {
-  const { headLimit, durationSeconds } = req.body
+  const { headLimit, durationSeconds } = req.body;
   const settings = await Settings.findOne();
-  settings.headLimit = headLimit
-  settings.durationSeconds = durationSeconds
+  settings.headLimit = headLimit;
+  settings.durationSeconds = durationSeconds;
   await settings.save();
-  res.status(201).json(settings)
-})
+  res.status(201).json(settings);
+});
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -88,10 +111,11 @@ const io = new Server(server, {
   },
 });
 
-let overLimitSince = null;
+let alertTimer = null; // PARA A DURATION
+let alertActive = false; // EVITAR VÁRIOS ALERTAS AO MESMO TEMPO
 
 io.on("connection", (socket) => {
-  socket.on("detection_data",  async (data) => {
+  socket.on("detection_data", async (data) => {
     /*  
         data.image - base64 encoded JPEG
         data.detection - informação da detecção, exemplo:
@@ -102,30 +126,38 @@ io.on("connection", (socket) => {
             summary: { Head: 3 }
         }
     */
-    io.emit("detection_data", data);  // transmitir a imagem e os dados de detecção para todos os clientes conectados
+    io.emit("detection_data", data); // transmitir a imagem e os dados de detecção para todos os clientes conectados
 
-    // o que fazer? 
+    // o que fazer?
     // detectar a quantidade de cabeças
-    const heads = data?.objects?.filter(o => o === "Head").length || 0;
+    const heads = data?.objects?.filter((o) => o === "Head").length || 0;
     //  se for maior que Limite por um intervalo de tempo -> salvar no banco de dados e emitir alerta via socket.io
     const settings = await Settings.findOne();
     const LIMIT = settings.headLimit;
     const DURATION = settings.durationSeconds * 1000;
 
     if (heads > LIMIT) {
-      if (!overLimitSince) {
-        overLimitSince = Date.now();
-      } else {
-        const elapsed = Date.now() - overLimitSince;
-        if (elapsed >= DURATION) {
+      if (!alertTimer && !alertActive) {
+        alertTimer = setTimeout(async () => {
           const alert = await Alert.create({
-            count: heads,
-            ...data,
+            countHeads: heads,
+            image: data.image,
+            detected: data.detection.detected,
+            objects: data.detection.objects,
+            summary: data.detection.summary,
           });
 
           io.emit("alert_triggered", alert);
-          overLimitSince = null;
+
+          alertActive = true;
+          alertTimer = null;
+        }, DURATION);
+      } else {
+        if (alertTimer) {
+          clearTimeout(alertTimer);
+          alertTimer = null;
         }
+        alertActive = false;
       }
     } else {
       overLimitSince = null;
