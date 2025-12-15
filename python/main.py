@@ -6,36 +6,53 @@ import numpy as np
 from collections import Counter
 from dotenv import load_dotenv
 import socketio
+import requests
+from colorama import init as colorama_init
+from colorama import Fore
+from colorama import Style
+
+colorama_init()
 
 load_dotenv()
 
 api_key = os.getenv("ROBOFLOW_API_KEY")
 socket_server_url = os.getenv("SOCKET_SERVER_URL", "http://localhost:3000")
+login_email = os.getenv("SOCKET_LOGIN_EMAIL", "")
+login_password = os.getenv("SOCKET_LOGIN_PASSWORD", "")
 
 if not api_key:
     raise ValueError("A ROBOFLOW_API_KEY não foi encontrada! Verifique o arquivo .env")
 
+# HTTP Session
+http_session = requests.Session()
+
+login_response = http_session.post(f'{socket_server_url}/login', json={
+    'email': login_email, 
+    'password': login_password
+})
+
+if login_response.status_code != 201:
+    print(f"{Fore.YELLOW}Falha no login: {login_response.text}{Style.RESET_ALL}")
+
 # Initialize Socket.IO client
-sio = socketio.Client()
+sio = socketio.Client(http_session=http_session)
 
 @sio.event
 def connect():
-    print(f"✅ Conectado ao servidor Socket.IO: {socket_server_url}")
+    print(f"{Fore.GREEN}Conectado ao servidor Socket.IO: {socket_server_url}{Style.RESET_ALL}")
 
 @sio.event
 def disconnect():
-    print("❌ Desconectado do servidor Socket.IO")
-
+    print(f"{Fore.YELLOW}Desconectado do servidor Socket.IO{Style.RESET_ALL}")
 @sio.event
 def connect_error(data):
-    print(f"⚠️ Erro de conexão Socket.IO: {data}")
+    print(f"{Fore.YELLOW}Erro de conexão Socket.IO: {data}{Style.RESET_ALL}")
 
 # Connect to Socket.IO server
 try:
     sio.connect(socket_server_url)
 except Exception as e:
-    print(f"⚠️ Não foi possível conectar ao servidor Socket.IO: {e}")
-    print("Continuando sem envio de dados via socket...")
+    print(f"{Fore.YELLOW}Não foi possível conectar ao servidor Socket.IO: {e}{Style.RESET_ALL}")
 
 pipeline = None
 
@@ -63,10 +80,10 @@ def my_sink(result, video_frame):
             detection_data["summary"] = resumo
             detection_data["objects"] = list(class_names)
             resumo_str = ", ".join([f"{qtd} {nome}" for nome, qtd in resumo.items()])
-            print(f"✅ Detectado: {count} objetos ({resumo_str})")
+            print(f"{Fore.CYAN}Detectado: {Fore.YELLOW}{count}{Fore.CYAN} objetos ({resumo_str}){Style.RESET_ALL}")
         else:
             detection_data["objects"] = list(predictions.class_id)
-            print(f"✅ Detectado: {count} objetos (IDs: {predictions.class_id})")
+            print(f"{Fore.CYAN}Detectado: {Fore.YELLOW}{count}{Fore.CYAN} objetos (IDs: {predictions.class_id}){Style.RESET_ALL}")
     #else:
     #    print(".", end="", flush=True)
     
@@ -95,7 +112,7 @@ def my_sink(result, video_frame):
             sio.emit("detection_data", payload)
             
         except Exception as e:
-            print(f"⚠️ Erro ao enviar dados: {e}")
+            print(f"{Fore.YELLOW}Erro ao enviar dados: {e}{Style.RESET_ALL}")
 
 # 2. Initialize pipeline
 pipeline = InferencePipeline.init_with_workflow(

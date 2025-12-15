@@ -1,3 +1,5 @@
 inference
 python-dotenv
 python-socketio
+requests
+colorama
