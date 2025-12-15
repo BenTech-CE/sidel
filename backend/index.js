@@ -4,6 +4,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 const session = require("express-session");
 
 const authCheck = require("./middleware/auth");
@@ -32,7 +33,7 @@ app.use(
 );
 
 mongoose
-  .connect(URI_MONGODB_CONNECTION)
+  .connect(URI_MONGODB_CONNECTION, { dbName: "sidel" })
   .then(() => console.log("MongoDB conectado!"))
   .catch((e) => console.log("Ocorreu um erro ao conectar com o MongoDB: ", e));
 
@@ -46,6 +47,20 @@ Settings.findOne().then(async (data) => {
     console.log("Settings padrão criados");
   }
 });
+
+// async function createAdminIfNotExists() {
+//     const hash = await bcrypt.hash("IfceSiDel@5432", 10);
+
+//     await User.create({
+//       email: "sidel@admin.com",
+//       password: hash,
+//       role: "admin"
+//     });
+
+//     console.log("Usuário admin criado automaticamente");
+// }
+
+// createAdminIfNotExists();
 
 // AUTH
 
@@ -168,7 +183,7 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
