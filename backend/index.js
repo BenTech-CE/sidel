@@ -118,10 +118,11 @@ app.get("/settings", authCheck, async (req, res) => {
 });
 
 app.post("/settings", authCheck, async (req, res) => {
-  const { headLimit, durationSeconds } = req.body;
+  const { headLimit, durationSeconds, cooldownSeconds } = req.body;
   const settings = await Settings.findOne();
   settings.headLimit = headLimit;
   settings.durationSeconds = durationSeconds;
+  settings.cooldownSeconds = cooldownSeconds;
   await settings.save();
   getSettings = settings;
   res.status(201).json(settings);
@@ -171,13 +172,13 @@ io.on("connection", (socket) => {
 
     const LIMIT = settings?.headLimit;
     const DURATION = settings?.durationSeconds * 1000;
-    const COOLDOWN = DURATION * 1.5;
+    const COOLDOWN = settings?.cooldownSeconds * 1000;
 
     if (heads > LIMIT) {
       if (!alertTimer && !cooldownTimer) {
         alertTimer = setTimeout(async () => {
           const alert = await Alert.create({
-            countHeads: heads,
+            countHeads: lastHeads,
             image: data.image,
             detected: data.detection.detected,
             objects: data.detection.objects,
