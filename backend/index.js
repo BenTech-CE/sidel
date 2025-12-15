@@ -106,7 +106,7 @@ app.get("/alerts", authCheck, async (req, res) => {
 // SETTINGS
 
 app.get("/settings", authCheck, async (req, res) => {
-  const settings = await Alert.findOne();
+  const settings = await Settings.findOne();
   res.status(200).json(settings);
 });
 
