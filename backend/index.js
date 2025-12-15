@@ -8,6 +8,7 @@ const bcrypt = require("bcrypt");
 const session = require("express-session");
 
 const authCheck = require("./middleware/auth");
+const socketAuthCheck = require("./middleware/socketAuth");
 
 const UserSchema = require("./models/user");
 const AlertSchema = require("./models/alert");
@@ -15,38 +16,44 @@ const SettingsSchema = require("./models/settings");
 
 const app = express();
 
-app.use(cors());
+const FRONTEND_URL = "http://localhost:5173";
+
+app.use(cors({ origin: FRONTEND_URL, credentials: true }));
 app.use(express.json());
 
 const URI_MONGODB_CONNECTION = process.env.URI_MONGODB_CONNECTION;
 const JWT_SECRET = process.env.JWT_SECRET;
 
-app.use(
-  session({
-    secret: JWT_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      maxAge: 24 * 60 * 60 * 1000,
-    },
-  })
-);
+const sessionMiddleware = session({
+  secret: JWT_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000,
+  },
+});
 
-mongoose
-  .connect(URI_MONGODB_CONNECTION, { dbName: "sidel" })
-  .then(() => console.log("MongoDB conectado!"))
-  .catch((e) => console.log("Ocorreu um erro ao conectar com o MongoDB: ", e));
+app.use(sessionMiddleware);
 
 const User = mongoose.model("User", UserSchema);
 const Alert = mongoose.model("Alert", AlertSchema);
 const Settings = mongoose.model("Settings", SettingsSchema);
 
-Settings.findOne().then(async (data) => {
-  if (!data) {
-    await Settings.create({});
-    console.log("Settings padrão criados");
-  }
-});
+let getSettings = null;
+
+mongoose
+  .connect(URI_MONGODB_CONNECTION, { dbName: "sidel" })
+  .then(async () => {
+    console.log("MongoDB conectado!");
+
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = await Settings.create({});
+    }
+    getSettings = settings;
+    console.log("Settings carregados");
+  })
+  .catch((e) => console.log("Ocorreu um erro ao conectar com o MongoDB: ", e));
 
 // async function createAdminIfNotExists() {
 //     const hash = await bcrypt.hash("IfceSiDel@5432", 10);
@@ -116,21 +123,32 @@ app.post("/settings", authCheck, async (req, res) => {
   settings.headLimit = headLimit;
   settings.durationSeconds = durationSeconds;
   await settings.save();
+  getSettings = settings;
   res.status(201).json(settings);
 });
+
+// SOCKET IO
 
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: FRONTEND_URL,
+    credentials: true,
   },
 });
 
-let alertTimer = null; // PARA A DURATION
-let alertActive = false; // EVITAR VÁRIOS ALERTAS AO MESMO TEMPO
+io.use((socket, next) => {
+  sessionMiddleware(socket.request, {}, next);
+});
+io.use(socketAuthCheck);
 
 io.on("connection", (socket) => {
+  let alertTimer = null;
+  let cooldownTimer = null;
+  let lastHeads = 0;
+
   socket.on("detection_data", async (data) => {
+    if (!data?.detection) return;
     /*  
         data.image - base64 encoded JPEG
         data.detection - informação da detecção, exemplo:
@@ -145,14 +163,18 @@ io.on("connection", (socket) => {
 
     // o que fazer?
     // detectar a quantidade de cabeças
-    const heads = data?.objects?.filter((o) => o === "Head").length || 0;
+    const heads = data?.detection?.summary?.Head || 0;
+    lastHeads = heads;
     //  se for maior que Limite por um intervalo de tempo -> salvar no banco de dados e emitir alerta via socket.io
-    const settings = await Settings.findOne();
-    const LIMIT = settings.headLimit;
-    const DURATION = settings.durationSeconds * 1000;
+    const settings = getSettings;
+    if (!settings) return;
+
+    const LIMIT = settings?.headLimit;
+    const DURATION = settings?.durationSeconds * 1000;
+    const COOLDOWN = DURATION * 1.5;
 
     if (heads > LIMIT) {
-      if (!alertTimer && !alertActive) {
+      if (!alertTimer && !cooldownTimer) {
         alertTimer = setTimeout(async () => {
           const alert = await Alert.create({
             countHeads: heads,
@@ -164,18 +186,20 @@ io.on("connection", (socket) => {
 
           io.emit("alert_triggered", alert);
 
-          alertActive = true;
           alertTimer = null;
+
+          cooldownTimer = setTimeout(() => {
+            cooldownTimer = null;
+          }, COOLDOWN);
         }, DURATION);
-      } else {
-        if (alertTimer) {
-          clearTimeout(alertTimer);
-          alertTimer = null;
-        }
-        alertActive = false;
       }
-    } else {
-      overLimitSince = null;
+
+      return;
+    }
+
+    if (alertTimer) {
+      clearTimeout(alertTimer);
+      alertTimer = null;
     }
 
     // por exemplo se o limite é 3 cabeças, e por 10 segundos seguidos foram detectadas mais de 3 cabeças, emitir alerta
