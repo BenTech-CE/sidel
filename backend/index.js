@@ -98,15 +98,15 @@ app.get("/alerts", authCheck, async (req, res) => {
   res.status(200).json(alerts);
 });
 
-app.post("/alerts", authCheck, async (req, res) => {
-  const alert = await Alert.create().sort(req.body);
-  res.status(201).json(alert);
-});
+// app.post("/alerts", authCheck, async (req, res) => {
+//   const alert = await Alert.create(req.body);
+//   res.status(201).json(alert);
+// });
 
 // SETTINGS
 
 app.get("/settings", authCheck, async (req, res) => {
-  const settings = await Alert.fondOne();
+  const settings = await Alert.findOne();
   res.status(200).json(settings);
 });
 
