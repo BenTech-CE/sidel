@@ -6,7 +6,7 @@ import RealTime from './pages/RealTime';
 import IndividualAlert from './pages/IndividualAlert';
 import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
-import { AuthProvider } from './context/authContext';
+import { AuthProvider } from './context/AuthContext';
 
 import './styles/global.css';
 

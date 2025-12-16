@@ -21,7 +21,7 @@ export const AuthProvider = ({children}) => {
         loadStorageData();
     }, []);
 
-    async function login() {
+    async function login(email, password) {
         try {
             const response = await api.post("/login", {email, password});
             setUser(response.data.user);

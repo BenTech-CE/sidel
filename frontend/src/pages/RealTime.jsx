@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar'; 
 import '../styles/RealTime.css'; 
 import { FiAlertTriangle, FiChevronRight } from 'react-icons/fi'; 
+import api from '../services/api';
 
+const nameCamera = "CÂMERA ELEVADOR BC IFCE FORTALEZA";
 
 //PRIORIDADE DOS ALERTAS
 const getAlertLevel = (alertTimestamp) => {
@@ -44,7 +46,7 @@ const AlertItem = useCallback(({ alert }) => (
     >
         <FiAlertTriangle className="alert-icon" /> 
         <span className="alert-status">
-            {alert.status} às {new Date(alert.timestamp).toLocaleTimeString('pt-BR', {
+            Lotação detectada às {new Date(alert.timestamp).toLocaleTimeString('pt-BR', {
                 hour: '2-digit',
                 minute: '2-digit'
             })}
@@ -55,28 +57,13 @@ const AlertItem = useCallback(({ alert }) => (
 
     useEffect(() => {
         setLoading(true);
-        
-        // SIMULACAO
-        const mock = [
-            { id: 1, timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(), status: 'Lotação detectada' },     
-            { id: 2, timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(), status: 'Lotação detectada' },    
-            { id: 3, timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), status: 'Lotação detectada' },
-            { id: 4, timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), status: 'Lotação detectada' },
-            { id: 5, timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(), status: 'Lotação detectada' },
-            { id: 6, timestamp: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(), status: 'Lotação detectada' },
-            { id: 7, timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), status: 'Lotação detectada' },
-            { id: 8, timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), status: 'Lotação detectada' },
-            { id: 9, timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), status: 'Lotação detectada' },
-        ];
-        
-        setTimeout(() => {
-            mock.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            setAlerts(mock);
+        async function handleGetAlerts() {
+            const response = await api.get("/alerts");
+            setAlerts(response.data);
+            console.log(response.data)
             setLoading(false);
-        }, 500); 
-        // FIM SIMU
-        
-        
+        };
+        handleGetAlerts();
     }, []);
     
  
@@ -111,7 +98,7 @@ const AlertItem = useCallback(({ alert }) => (
                         <div className="video-header">
                             <span className="camera-info">
                                 <h2 className="content-title">Em Tempo Real</h2>
-                               CAMERA ELEVADOR BC {getSummaryString()} 
+                               {nameCamera} {getSummaryString()} 
                             </span>
                             <span className="live-indicator">LIVE</span>
                         </div>
@@ -139,7 +126,7 @@ const AlertItem = useCallback(({ alert }) => (
                                         <p className="alert-group-date">{dayLabel}</p>
                                         <div className="alert-group">
                                             {groupedAlerts[dayLabel].map(alert => (
-                                                <AlertItem key={alert.id} alert={alert} />
+                                                <AlertItem key={alert._id} alert={alert} />
                                             ))}
                                         </div>
                                     </React.Fragment>

@@ -1,19 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiSettings, FiUser } from 'react-icons/fi';
-
 import '../styles/Navbar.css';
+
+import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
     const navigate = useNavigate();
     const [showLogoutCard, setShowLogoutCard] = useState(false);
     const profileRef = useRef(null);
 
-    const handleLogout = () => {
-        localStorage.removeItem('userToken');
-        localStorage.removeItem('userEmail');
-        navigate('/');
-    };
+    const {logout} = useAuth();
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -64,7 +61,7 @@ const Navbar = () => {
                     <div className="profile-dropdown-card-logout">
                         <button
                             className="logout-button-card-only"
-                            onClick={handleLogout}
+                            onClick={logout}
                         >
                             Sair
                         </button>
