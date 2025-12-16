@@ -71,6 +71,10 @@ mongoose
 
 // AUTH
 
+app.get("/me", authCheck, (req, res) => {
+  res.status(200).json(req.session.user);
+});
+
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
