@@ -41,7 +41,7 @@ const RealTime = () => {
 const AlertItem = useCallback(({ alert }) => (
     <div 
         className={`alert-item ${getAlertLevel(alert.timestamp)}`}
-        onClick={() => navigate(`/individualalert/${alert.id}`)}
+        onClick={() => navigate(`/individualalert/${alert._id}`)}
         style={{ cursor: 'pointer' }}
     >
         <FiAlertTriangle className="alert-icon" /> 

@@ -1,0 +1,102 @@
+/* Container Principal com compensação da Navbar */
+.individual-alert-container {
+  padding-top: 80px;
+  min-height: 100vh;
+  background-color: #0a0f18; /* Fundo bem escuro */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-bottom: 40px;
+}
+
+.alert-card {
+  background: #161e2d;
+  width: 90%;
+  max-width: 1100px;
+  border-radius: 8px;
+  border: 1px solid #2d3748;
+  margin-top: 40px;
+  box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+
+.alert-header {
+  padding: 20px 30px;
+  border-bottom: 1px solid #2d3748;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.badge {
+  color: #63b3ed;
+  font-size: 0.7rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.alert-id-tag {
+  color: #4a5568;
+  font-family: monospace;
+  font-size: 0.8rem;
+}
+
+.alert-content {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 30px;
+  padding: 30px;
+}
+
+/* Painel de Dados */
+.data-row { margin-bottom: 25px; }
+.data-row label {
+  color: #718096;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.status-critical { color: #f56565; font-weight: bold; }
+.big-number {
+  font-size: 4rem;
+  font-weight: 900;
+  color: #63b3ed;
+  line-height: 1;
+}
+.big-number span { font-size: 1rem; color: #4a5568; margin-left: 10px; }
+
+/* Moldura da Imagem (Estilo Monitor) */
+.monitor-frame {
+  position: relative;
+  border: 4px solid #2d3748;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #000;
+}
+
+.monitor-frame img {
+  width: 100%;
+  display: block;
+  opacity: 0.9;
+}
+
+/* Efeito de linha de scanner por cima da foto */
+.scanline {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(to bottom, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+              linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  background-size: 100% 4px, 3px 100%;
+  pointer-events: none;
+}
+
+.loading-screen {
+  height: 100vh;
+  background: #0a0f18;
+  color: #63b3ed;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}

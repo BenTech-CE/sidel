@@ -109,6 +109,11 @@ app.get("/alerts", authCheck, async (req, res) => {
   res.status(200).json(alerts);
 });
 
+app.get("/alert/:id", authCheck, async (req, res) => {
+  const alert = await Alert.findById(req.params.id);
+  res.status(200).json(alert);
+})
+
 // app.post("/alerts", authCheck, async (req, res) => {
 //   const alert = await Alert.create(req.body);
 //   res.status(201).json(alert);
