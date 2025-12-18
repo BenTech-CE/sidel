@@ -1,13 +1,15 @@
 .page-wrapper {
   background-color: #f3f4f6; /* Fundo cinza claro da imagem */
-  min-height: 100vh;
+  height: 100vh;
 }
 
 .alert-container {
-  padding-top: 100px; /* Ajuste para a sua Navbar */
-  max-width: 1200px;
-  margin: 0 auto;
-  padding-inline: 40px;
+  padding: 20px 40px 20px 40px;
+  height: calc(100vh - 64px);
+}
+
+.loading {
+  color: black;
 }
 
 .alert-top-bar {

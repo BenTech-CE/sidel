@@ -4,11 +4,19 @@ import { FiSettings, FiUser } from 'react-icons/fi';
 import '../styles/Navbar.css';
 
 import { useAuth } from '../context/AuthContext';
+import Drawer from './Drawer';
+import Settings from '../pages/Settings';
 
 const Navbar = () => {
     const navigate = useNavigate();
     const [showLogoutCard, setShowLogoutCard] = useState(false);
     const profileRef = useRef(null);
+
+    const [settingsOpen, setSettingsOpen] = useState(false);
+
+    const toggleSettings = () => {
+        setSettingsOpen(!settingsOpen);
+    };
 
     const {logout} = useAuth();
 
@@ -43,7 +51,7 @@ const Navbar = () => {
             <div className="navbar-right" ref={profileRef}>
                 <button
                     className="nav-icon-button"
-                    onClick={() => navigate('/settings')}
+                    onClick={toggleSettings}
                     title="Configurações"
                 >
                     <FiSettings className="nav-icon" />
@@ -68,6 +76,10 @@ const Navbar = () => {
                     </div>
                 )}
             </div>
+
+            <Drawer isOpen={settingsOpen} close={toggleSettings}>
+                <Settings />
+            </Drawer>
         </header>
     );
 };

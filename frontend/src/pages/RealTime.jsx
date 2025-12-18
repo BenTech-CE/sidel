@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import '../styles/RealTime.css'; 
 import { FiAlertTriangle, FiChevronRight } from 'react-icons/fi'; 
 import api from '../services/api';
+import { useSocket } from '../context/SocketContext';
 
 const nameCamera = "CÂMERA ELEVADOR BC IFCE FORTALEZA";
 
@@ -31,12 +32,14 @@ const RealTime = () => {
     const navigate = useNavigate();
     const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const socket = useSocket();
     
     // ESTADO OBJ
     const [detectionSummary, setDetectionSummary] = useState({});
 
     // VIDEO
-    const [videoFeed, setVideoFeed] = useState('/images/backgroundlogin.png');
+    const [videoFeed, setVideoFeed] = useState('/images/caregando.webp');
 
 const AlertItem = useCallback(({ alert }) => (
     <div 
@@ -64,6 +67,19 @@ const AlertItem = useCallback(({ alert }) => (
             setLoading(false);
         };
         handleGetAlerts();
+
+        socket.connect();
+
+        socket.on("detection_data", (data) => {
+            if (data?.image) {
+                setVideoFeed(`data:image/jpeg;base64,${data.image}`);
+            }
+        })
+
+        return () => {
+            socket.off("detection_data");
+            socket.disconnect();
+        }
     }, []);
     
  
@@ -93,22 +109,24 @@ const AlertItem = useCallback(({ alert }) => (
         <div className="realtime-page">
             
             <div className="realtime-content-container">
-                <div className="main-content">
-                    <div className="video-monitor-card">
-                        <div className="video-header">
-                            <span className="camera-info">
-                                <h2 className="content-title">Em Tempo Real</h2>
-                               {nameCamera} {getSummaryString()} 
-                            </span>
-                            <span className="live-indicator">LIVE</span>
+                <div className='spacer'>
+                    <div className="main-content">
+                        <div className="video-monitor-card">
+                            <div className="video-header">
+                                <span className="camera-info">
+                                    <h2 className="content-title">Em Tempo Real</h2>
+                                {nameCamera} {getSummaryString()} 
+                                </span>
+                                <span className="live-indicator">LIVE</span>
+                            </div>
+                            <img 
+                                // live
+                                src={videoFeed} 
+                                alt="Monitoramento em Tempo Real"
+                                className="video-feed-placeholder"
+                            />
+                            <div className="video-controls"></div>
                         </div>
-                        <img 
-                            // live
-                            src={videoFeed} 
-                            alt="Monitoramento em Tempo Real"
-                            className="video-feed-placeholder"
-                        />
-                        <div className="video-controls"></div>
                     </div>
                 </div>
 
@@ -117,7 +135,7 @@ const AlertItem = useCallback(({ alert }) => (
                         <h3>Histórico de Alertas</h3>
                         <hr className="header-divider" />
                         
-                        {loading && <p style={{ textAlign: 'center', color: '#555' }}>Carregando alertas iniciais...</p>}
+                        {loading && <p style={{ textAlign: 'center', color: '#555', minWidth: '350px' }}>Carregando alertas iniciais...</p>}
                         
                         {!loading && alerts.length > 0 && (
                             <div className="alert-list-scroll"> 
@@ -135,7 +153,7 @@ const AlertItem = useCallback(({ alert }) => (
                         )}
                         
                         {!loading && alerts.length === 0 && (
-                            <p style={{ textAlign: 'center', color: '#555' }}>Nenhum alerta encontrado.</p>
+                            <p style={{ textAlign: 'center', color: '#555', minWidth: '350px'  }}>Nenhum alerta encontrado.</p>
                         )}
                     
                     </div>

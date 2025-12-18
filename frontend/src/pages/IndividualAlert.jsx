@@ -22,15 +22,13 @@ const IndividualAlert = () => {
     getAlert();
   }, [id]);
 
-  if (!alert) return <div className="loading">Carregando...</div>;
-
-  const date = new Date(alert.timestamp);
+  const date = alert ? new Date(alert.timestamp) : null;
 
   return (
     <div className="page-wrapper">
       <Navbar />
       
-      <main className="alert-container">
+      {alert ? <main className="alert-container">
         <header className="alert-top-bar">
           <button className="back-btn" onClick={() => navigate(-1)}>
             <FiChevronLeft size={32} />
@@ -70,6 +68,11 @@ const IndividualAlert = () => {
           </div>
         </div>
       </main>
+      : 
+      <main className='alert-container'>
+        <div className="loading">Carregando...</div>
+      </main>
+      }
     </div>
   );
 };

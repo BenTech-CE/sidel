@@ -11,7 +11,7 @@
     height: 64px;
     padding: 0 24px;
 
-    background: rgba(0, 0, 0, 0.85);
+    background: rgb(0, 0, 0);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 

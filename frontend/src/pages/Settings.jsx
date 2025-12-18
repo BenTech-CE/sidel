@@ -2,18 +2,17 @@ import React, { useState /* useEffect */ } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiChevronLeft, FiSettings } from 'react-icons/fi';
 import '../styles/Settings.css';
+import { useDrawer } from '../components/Drawer';
 
 const Settings = () => {
   const navigate = useNavigate();
+
+  const { close } = useDrawer();
 
   // aimulação
   const [maxCapacity, setMaxCapacity] = useState(4);
   const [timeToAlert, setTimeToAlert] = useState(10);
   const [timeBetweenAlerts, setTimeBetweenAlerts] = useState(30);
-
-  const handleBack = () => {
-    navigate(-1);
-  };
 
   const handleSave = () => {
     console.log('Config simuladas:', {
@@ -22,7 +21,7 @@ const Settings = () => {
       timeBetweenAlerts
     });
 
-    handleBack();
+    close();
   };
 
   return (
@@ -30,7 +29,7 @@ const Settings = () => {
       <div className="settings-content">
 
         <div className="settings-header">
-          <button className="back-button" onClick={handleBack}>
+          <button className="back-button" onClick={close}>
             <FiChevronLeft size={24} />
           </button>
 

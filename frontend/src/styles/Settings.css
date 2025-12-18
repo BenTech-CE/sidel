@@ -1,17 +1,6 @@
-.settings-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.4); 
-    display: flex;
-    justify-content: flex-end; 
-}
-
 .settings-content {
     width: 500px; 
-    height: 100%;
+    height: 100vh;
     background-color: #ffffff; 
     color: #000000;
     box-shadow: -8px 0 20px rgba(0, 0, 0, 0.3);
