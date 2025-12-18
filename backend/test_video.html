@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detection Data Listener</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .image-container {
+            flex: 1;
+        }
+        .image-container img {
+            max-width: 100%;
+            border: 2px solid #333;
+            border-radius: 5px;
+        }
+        .data-container {
+            flex: 1;
+        }
+        .detection-info {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+        .log-container {
+            margin-top: 20px;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            font-family: monospace;
+            font-size: 12px;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        .timestamp {
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <h1>Detection Data Listener</h1>
+    
+    <div id="status" class="status disconnected">Disconnected</div>
+    
+    <div class="container">
+        <div class="image-container">
+            <h2>Latest Frame</h2>
+            <img id="detectionImage" src="" alt="Detection Image" style="display: none;">
+            <p id="noImage">No image received yet</p>
+        </div>
+        
+        <div class="data-container">
+            <h2>Detection Info</h2>
+            <div class="detection-info">
+                <p><strong>Detected:</strong> <span id="detected">-</span></p>
+                <p><strong>Count:</strong> <span id="count">-</span></p>
+                <p><strong>Objects:</strong> <span id="objects">-</span></p>
+                <p><strong>Summary:</strong> <span id="summary">-</span></p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="log-container">
+        <h3>Event Log</h3>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const detectionImage = document.getElementById('detectionImage');
+        const noImageEl = document.getElementById('noImage');
+        const detectedEl = document.getElementById('detected');
+        const countEl = document.getElementById('count');
+        const objectsEl = document.getElementById('objects');
+        const summaryEl = document.getElementById('summary');
+        const logEl = document.getElementById('log');
+
+        let socket = null;
+
+        function addLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
+            logEl.insertBefore(entry, logEl.firstChild);
+            
+            // Keep only last 50 entries
+            while (logEl.children.length > 50) {
+                logEl.removeChild(logEl.lastChild);
+            }
+        }
+        
+        // Login and connect to socket
+        async function loginAndConnect() {
+            addLog('Attempting to login...');
+            
+            try {
+                const response = await fetch('http://localhost:8080/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'sidel@admin.com',
+                        password: 'IfceSiDel@5432'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog('Login successful! Connecting to socket...');
+                    
+                    // Connect socket with credentials
+                    socket = io('http://localhost:8080', {
+                        withCredentials: true
+                    });
+
+                    setupSocketEvents();
+                } else {
+                    const error = await response.json();
+                    addLog(`Login failed: ${error.message || 'Unknown error'}`);
+                }
+            } catch (error) {
+                addLog(`Login error: ${error.message}`);
+            }
+        }
+
+        function setupSocketEvents() {
+            socket.on('connect', () => {
+                statusEl.textContent = 'Connected';
+                statusEl.className = 'status connected';
+                addLog('Connected to server');
+            });
+
+            socket.on('disconnect', () => {
+                statusEl.textContent = 'Disconnected';
+                statusEl.className = 'status disconnected';
+                addLog('Disconnected from server');
+            });
+
+            socket.on('detection_data', (data) => {
+                addLog('Received detection_data');
+                
+                // Update image if present
+                if (data.image) {
+                    detectionImage.src = `data:image/jpeg;base64,${data.image}`;
+                    detectionImage.style.display = 'block';
+                    noImageEl.style.display = 'none';
+                }
+                
+                // Update detection info
+                if (data.detection) {
+                    detectedEl.textContent = data.detection.detected ? 'Yes' : 'No';
+                    countEl.textContent = data.detection.count || 0;
+                    objectsEl.textContent = data.detection.objects ? data.detection.objects.join(', ') : '-';
+                    summaryEl.textContent = data.detection.summary ? JSON.stringify(data.detection.summary) : '-';
+                }
+                
+                console.log('Detection data received:', data);
+            });
+
+            socket.on('alert_triggered', (alert) => {
+                addLog(`Alert triggered: ${alert || 'No message'}`);
+            });
+
+            socket.on('connect_error', (error) => {
+                addLog(`Connection error: ${error.message}`);
+            });
+        }
+
+        // Start login process on page load
+        loginAndConnect();
+    </script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+.settings-content {
+    width: 500px; 
+    height: 100vh;
+    background-color: #ffffff; 
+    color: #000000;
+    box-shadow: -8px 0 20px rgba(0, 0, 0, 0.3);
+    
+    display: flex;
+    flex-direction: column;
+}
+
+
+.settings-header {
+    display: flex;
+    align-items: center;
+    padding: 20px 25px; 
+    border-bottom: 1px solid #e0e0e0; 
+}
+
+.back-button {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #333; 
+    padding: 0;
+    margin-right: 20px;
+    transition: color 0.2s;
+}
+
+.back-button:hover {
+    color: #000;
+}
+
+.back-button svg {
+    margin-right: 5px; 
+}
+
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-title h2 {
+    margin: 0;
+    font-size: 1.4em;
+    font-weight: 600;
+}
+
+
+.settings-body {
+    flex-grow: 1; 
+    padding: 25px; 
+    overflow-y: auto; 
+}
+
+.setting-group {
+    margin-bottom: 30px; 
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0; 
+}
+
+.setting-group:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.setting-group h3 {
+    font-size: 1.05em; 
+    font-weight: 600; 
+    margin: 0 0 5px 0;
+}
+
+.description {
+    font-size: 0.85em; 
+    color: #333232; 
+    margin: 0 0 15px 0;
+}
+
+.input-black-box {
+    background-color: #1a1a1a;
+    color: white; 
+    border-radius: 10px; 
+    display: flex;
+    align-items: center;
+    padding: 8px 12px; 
+    margin-top: 10px; 
+    width: fit-content; 
+}
+
+.input-black-box span {
+    font-size: 0.9em;
+    font-weight: 500; 
+    color: white; 
+}
+
+.input-black-box input[type="number"] {
+    width: 40px; 
+    border-radius: 5px;
+    background-color: #ffffff; 
+    color: #000000;
+    border: none; 
+    padding: 0PX; 
+    text-align: center;
+    font-size: 1em;
+    font-weight: 600;
+    margin: 0 15px; 
+    height: 25px;
+    width: 50px;
+}
+
+
+.settings-footer {
+    padding: 20px 25px;
+    border-top: 1px solid #e0e0e0;
+    text-align: right;
+}
+
+.save-button {
+    background-color: #159123; 
+    color: white;
+    border: none;
+    
+    padding: 12px 30px; 
+    height: auto; 
+    width: 100%; 
+    
+    border-radius: 4px; 
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.save-button:hover {
+    background-color: #275a33;
+}

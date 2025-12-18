@@ -71,6 +71,10 @@ mongoose
 
 // AUTH
 
+app.get("/me", authCheck, (req, res) => {
+  res.status(200).json(req.session.user);
+});
+
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -105,6 +109,11 @@ app.get("/alerts", authCheck, async (req, res) => {
   res.status(200).json(alerts);
 });
 
+app.get("/alert/:id", authCheck, async (req, res) => {
+  const alert = await Alert.findById(req.params.id);
+  res.status(200).json(alert);
+});
+
 app.delete("/alerts/:id", authCheck, async (req, res) => {
   try {
     const { id } = req.params;
@@ -120,6 +129,7 @@ app.delete("/alerts/:id", authCheck, async (req, res) => {
     res.status(500).json({ error: `Erro ao deletar alerta: ${err.message}` });
   }
 });
+
 // app.post("/alerts", authCheck, async (req, res) => {
 //   const alert = await Alert.create(req.body);
 //   res.status(201).json(alert);

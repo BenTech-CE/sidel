@@ -1,0 +1,79 @@
+.navbar-container {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    height: 64px;
+    padding: 0 24px;
+
+    background: rgb(0, 0, 0);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: relative;
+}
+
+.nav-icon-button {
+    background: none;
+    cursor: pointer;
+
+    color: #ffffff;
+    padding: 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: 
+        background-color 0.25s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.nav-icon-button:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.nav-icon-button:active {
+    transform: scale(0.95);
+}
+
+.nav-icon {
+    font-size: 20px;
+}
+
+.navbar-logo-img {
+    height: 42px;
+    object-fit: contain;
+    cursor: pointer;
+    transition: transform 0.25s ease;
+}
+
+.profile-dropdown-card-logout {
+    position: absolute;
+    top: 48px;
+    right: 0;
+
+    background: rgba(15, 15, 15, 0.95);
+    border-radius: 8px;
+
+    padding: 4px;
+    min-width: 110px;
+
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+    z-index: 200;
+}
