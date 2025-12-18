@@ -105,6 +105,21 @@ app.get("/alerts", authCheck, async (req, res) => {
   res.status(200).json(alerts);
 });
 
+app.delete("/alerts/:id", authCheck, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ error: "ID do alerta é obrigatório" });
+    }
+
+    await Alert.deleteOne({ _id: id });
+
+    res.status(200).json({ message: "Alerta deletado com sucesso" });
+  } catch (err) {
+    res.status(500).json({ error: `Erro ao deletar alerta: ${err.message}` });
+  }
+});
 // app.post("/alerts", authCheck, async (req, res) => {
 //   const alert = await Alert.create(req.body);
 //   res.status(201).json(alert);
