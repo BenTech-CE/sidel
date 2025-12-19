@@ -24,6 +24,26 @@ const IndividualAlert = () => {
 
   const date = alert ? new Date(alert.timestamp) : null;
 
+  async function deleteAlert(id) {
+    try{
+      const response = await api.delete(`/alerts/${id}`);
+      console.log(`Alerta ${id} deletado com sucesso: Status ${response.status}, ${response.statusText}`);
+    } catch (err) {
+      console.error(`Erro ao deletar alerta: ${err}`);
+    }
+  };
+
+  async function notifyAlert(){
+    try {
+      await api.post('/send-alert', {
+        id : alert._id
+      });
+      console.log('Alerta enviado por e-mail');
+    } catch (err) {
+      console.error(`Erro ao enviar alerta: ${err}`);
+    }
+  }
+
   return (
     <div className="page-wrapper">
       <Navbar />
@@ -48,10 +68,10 @@ const IndividualAlert = () => {
             </div>
 
             <div className="actions">
-              <button className="btn-delete">
+              <button className="btn-delete" onClick={() => {deleteAlert(id); navigate('/realtime')}}>
                 <FiTrash2 /> Apagar alerta
               </button>
-              <button className="btn-notify">
+              <button className="btn-notify" onClick={notifyAlert}>
                 <FiBell /> Notificar Alerta
               </button>
             </div>

@@ -6,6 +6,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
+const nodemailer = require("nodemailer");
 
 const authCheck = require("./middleware/auth");
 const socketAuthCheck = require("./middleware/socketAuth");
@@ -23,6 +24,17 @@ app.use(express.json());
 
 const URI_MONGODB_CONNECTION = process.env.URI_MONGODB_CONNECTION;
 const JWT_SECRET = process.env.JWT_SECRET;
+
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: EMAIL_USER,
+    pass: EMAIL_PASS
+  }
+})
 
 const sessionMiddleware = session({
   secret: JWT_SECRET,
@@ -152,6 +164,43 @@ app.post("/settings", authCheck, async (req, res) => {
   getSettings = settings;
   res.status(201).json(settings);
 });
+
+// Rota para enviar e-mail
+
+app.post("/send-alert", authCheck, async (req, res) => {
+  const {id} = req.body;
+
+  const alert =  Alert.findById(id);
+
+  const mailOptions = {
+    from: EMAIL_USER,
+    to: 'gabrielsennssenna@email.com',
+    subject: `⚠️ ALERTA SIDEL: Lotação Detectada`,
+    html: `
+      <h2>Alerta de Lotação SIDEL</h2>
+      <p><strong>ID do Alerta:</strong> ${alert.id}</p>
+      <p><strong>Pessoas Detectadas:</strong> ${alert.countHeads}</p>
+      <p><strong>Data/Hora:</strong> ${new Date(alert.timestamp).toLocaleString('pt-BR')}</p>
+      <hr>
+      <p>Veja a imagem de captura em anexo.</p>
+    `,
+    attachments: [
+      {
+        filename: 'captura.jpg',
+        content: alert.image,
+        encoding: 'base64'
+      }
+    ]
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    res.status(200).send('E-mail enviado com sucesso!');
+  } catch (error) {
+    console.error("Erro ao enviar e-mail:", error);
+    res.status(500).send("Erro ao enviar notificação.");
+  }
+})
 
 // SOCKET IO
 
