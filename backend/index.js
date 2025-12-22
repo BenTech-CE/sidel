@@ -155,11 +155,12 @@ app.get("/settings", authCheck, async (req, res) => {
 });
 
 app.post("/settings", authCheck, async (req, res) => {
-  const { headLimit, durationSeconds, cooldownSeconds } = req.body;
+  const { headLimit, durationSeconds, cooldownSeconds, emailRecipient } = req.body;
   const settings = await Settings.findOne();
   settings.headLimit = headLimit;
   settings.durationSeconds = durationSeconds;
   settings.cooldownSeconds = cooldownSeconds;
+  settings.emailRecipient = emailRecipient;
   await settings.save();
   getSettings = settings;
   res.status(201).json(settings);
@@ -170,20 +171,56 @@ app.post("/settings", authCheck, async (req, res) => {
 app.post("/send-alert", authCheck, async (req, res) => {
   const {id} = req.body;
 
-  const alert =  Alert.findById(id);
+  const alert =  await Alert.findById(id);
+
+  const htmlEmail = `
+  <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #ffffff; margin: 0; padding: 40px; color: #000000; line-height: 1.6;">
+    <div style="max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+      
+      <div style="background-color: #000000; padding: 20px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 4px; font-weight: 900;">SIDEL</h1>
+        <p style="color: #ffffff; margin: 5px 0 0 0; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8;">Sistema Inteligente de Detecção de Lotação</p>
+      </div>
+
+      <div style="padding: 40px;">
+        <div style="border-left: 4px solid #000000; padding-left: 20px; margin-bottom: 30px;">
+          <h2 style="margin: 0; font-size: 20px; text-transform: uppercase; letter-spacing: 1px;">Relatório de Incidente</h2>
+          <p style="margin: 5px 0 0 0; color: #666666; font-size: 14px;">Um excesso de lotação foi detectado pelo sensor.</p>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+          <tr>
+            <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0; color: #666666; font-size: 13px; text-transform: uppercase;">ID do Alerta</td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-family: monospace; font-weight: bold;">${alert._id}</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0; color: #666666; font-size: 13px; text-transform: uppercase;">Data e Horário</td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-weight: bold;">${new Date(alert.timestamp).toLocaleString('pt-BR')}</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0; color: #666666; font-size: 13px; text-transform: uppercase;">Pessoas Detectadas</td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-size: 22px; font-weight: 900; color: #e53e3e;">${alert.countHeads}</td>
+          </tr>
+        </table>
+
+        <div style="background-color: #f9f9f9; padding: 20px; border-radius: 4px; text-align: center;">
+          <p style="margin: 0; font-size: 13px; color: #666666;">A imagem da captura de segurança foi anexada a este e-mail para análise detalhada.</p>
+        </div>
+      </div>
+
+      <div style="background-color: #f4f4f4; padding: 20px; text-align: center; border-top: 1px solid #e0e0e0;">
+        <p style="margin: 0; font-size: 11px; color: #999999; text-transform: uppercase; letter-spacing: 1px;">&copy; 2025 SIDEL Monitoring Group</p>
+      </div>
+    </div>
+  </div>
+`;
+  const settings = getSettings
 
   const mailOptions = {
     from: EMAIL_USER,
-    to: 'gabrielsennssenna@email.com',
+    to: settings.emailRecipient,
     subject: `⚠️ ALERTA SIDEL: Lotação Detectada`,
-    html: `
-      <h2>Alerta de Lotação SIDEL</h2>
-      <p><strong>ID do Alerta:</strong> ${alert.id}</p>
-      <p><strong>Pessoas Detectadas:</strong> ${alert.countHeads}</p>
-      <p><strong>Data/Hora:</strong> ${new Date(alert.timestamp).toLocaleString('pt-BR')}</p>
-      <hr>
-      <p>Veja a imagem de captura em anexo.</p>
-    `,
+    html: htmlEmail,
     attachments: [
       {
         filename: 'captura.jpg',

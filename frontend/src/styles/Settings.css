@@ -89,16 +89,18 @@
     padding: 8px 12px; 
     margin-top: 10px; 
     width: fit-content; 
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .input-black-box span {
     font-size: 0.9em;
-    font-weight: 500; 
+    font-weight: 500;
     color: white; 
 }
 
-.input-black-box input[type="number"] {
-    width: 40px; 
+.input-black-box input {
     border-radius: 5px;
     background-color: #ffffff; 
     color: #000000;
@@ -107,9 +109,17 @@
     text-align: center;
     font-size: 1em;
     font-weight: 600;
-    margin: 0 15px; 
     height: 25px;
+}
+
+.input-black-box input[type="number"] {
     width: 50px;
+}
+
+.input-black-box input[type="email"] {
+    width: 250px;
+    text-align: left;
+    padding: 0 6px;
 }
 
 
