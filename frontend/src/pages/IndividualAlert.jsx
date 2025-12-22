@@ -4,11 +4,15 @@ import { FiAlertTriangle, FiTrash2, FiBell, FiChevronLeft } from 'react-icons/fi
 import Navbar from '../components/Navbar';
 import api from '../services/api'; 
 import '../styles/IndividualAlert.css';
+import SidelLoading from '../components/Loader';
+import { FaCheck } from "react-icons/fa6";
 
 const IndividualAlert = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [alert, setAlert] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [emailSend, setEmailSend] = useState(false);
 
   useEffect(() => {
     async function getAlert() {
@@ -22,6 +26,14 @@ const IndividualAlert = () => {
     getAlert();
   }, [id]);
 
+  useEffect (() => {
+    if (emailSend) {
+      setTimeout(() => {
+        setEmailSend(false);
+      }, [2000])
+    }
+  }, [emailSend]);
+
   const date = alert ? new Date(alert.timestamp) : null;
 
   async function deleteAlert(id) {
@@ -34,13 +46,17 @@ const IndividualAlert = () => {
   };
 
   async function notifyAlert(){
+    setLoading(true);
     try {
       await api.post('/send-alert', {
         id : alert._id
       });
       console.log('Alerta enviado por e-mail');
+      setEmailSend(true);
     } catch (err) {
       console.error(`Erro ao enviar alerta: ${err}`);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -71,8 +87,8 @@ const IndividualAlert = () => {
               <button className="btn-delete" onClick={() => {deleteAlert(id); navigate('/realtime')}}>
                 <FiTrash2 /> Apagar alerta
               </button>
-              <button className="btn-notify" onClick={notifyAlert}>
-                <FiBell /> Notificar Alerta
+              <button className="btn-notify" onClick={notifyAlert} style={{backgroundColor: emailSend ? "#00d100ff" : ""}}>
+                { emailSend ? <FaCheck/>  : loading ? <SidelLoading message="Enviando e-mail"/> : <FiBell /> } Notificar Alerta
               </button>
             </div>
           </div>

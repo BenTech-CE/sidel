@@ -82,7 +82,9 @@
 }
 
 .btn-delete { background-color: #e53e3e; } /* Vermelho */
-.btn-notify { background-color: #3182ce; } /* Azul */
+.btn-notify { 
+  background-color: #3182ce;  
+} /* Azul */
 
 .actions button:hover { opacity: 0.9; }
 
