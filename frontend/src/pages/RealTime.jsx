@@ -41,22 +41,22 @@ const RealTime = () => {
     // VIDEO
     const [videoFeed, setVideoFeed] = useState('/images/caregando.webp');
 
-const AlertItem = useCallback(({ alert }) => (
-    <div 
-        className={`alert-item ${getAlertLevel(alert.timestamp)}`}
-        onClick={() => navigate(`/individualalert/${alert._id}`)}
-        style={{ cursor: 'pointer' }}
-    >
-        <FiAlertTriangle className="alert-icon" /> 
-        <span className="alert-status">
-            Lotação detectada às {new Date(alert.timestamp).toLocaleTimeString('pt-BR', {
-                hour: '2-digit',
-                minute: '2-digit'
-            })}
-        </span>
-        <FiChevronRight className="alert-arrow" />
-    </div>
-), [navigate]);
+    const AlertItem = useCallback(({ alert }) => (
+        <div 
+            className={`alert-item ${getAlertLevel(alert.timestamp)}`}
+            onClick={() => navigate(`/individualalert/${alert._id}`)}
+            style={{ cursor: 'pointer' }}
+        >
+            <FiAlertTriangle className="alert-icon" /> 
+            <span className="alert-status">
+                Lotação detectada às {new Date(alert.timestamp).toLocaleTimeString('pt-BR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })}
+            </span>
+            <FiChevronRight className="alert-arrow" />
+        </div>
+    ), [navigate]);
 
     useEffect(() => {
         setLoading(true);
@@ -76,8 +76,13 @@ const AlertItem = useCallback(({ alert }) => (
             }
         })
 
+        socket.on("alert_triggered", (newAlert) => {
+            setAlerts((prevAlerts) => [newAlert, ...prevAlerts]);
+        });
+
         return () => {
             socket.off("detection_data");
+            socket.off("alert_triggered");
             socket.disconnect();
         }
     }, []);

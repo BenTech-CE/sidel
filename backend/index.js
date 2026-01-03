@@ -174,7 +174,7 @@ app.post("/send-alert", authCheck, async (req, res) => {
   const alert =  await Alert.findById(id);
 
   const htmlEmail = `
-  <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #ffffff; margin: 0; padding: 40px; color: #000000; line-height: 1.6;">
+  <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #ffffff; margin: 0; padding: 0; color: #000000; line-height: 1.6;">
     <div style="max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
       
       <div style="background-color: #000000; padding: 20px; text-align: center;">
@@ -209,7 +209,7 @@ app.post("/send-alert", authCheck, async (req, res) => {
       </div>
 
       <div style="background-color: #f4f4f4; padding: 20px; text-align: center; border-top: 1px solid #e0e0e0;">
-        <p style="margin: 0; font-size: 11px; color: #999999; text-transform: uppercase; letter-spacing: 1px;">&copy; 2025 SIDEL Monitoring Group</p>
+        <p style="margin: 0; font-size: 11px; color: #999999; text-transform: uppercase; letter-spacing: 1px;">&copy; 2025 BENTECH SOLUÇÕES DIGITAIS LTDA</p>
       </div>
     </div>
   </div>

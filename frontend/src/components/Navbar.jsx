@@ -20,6 +20,11 @@ const Navbar = () => {
 
     const {logout} = useAuth();
 
+    const deslogar = () => {
+        logout();
+        navigate("/");
+    }
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (
@@ -69,7 +74,7 @@ const Navbar = () => {
                     <div className="profile-dropdown-card-logout">
                         <button
                             className="logout-button-card-only"
-                            onClick={logout}
+                            onClick={deslogar}
                         >
                             Sair
                         </button>
