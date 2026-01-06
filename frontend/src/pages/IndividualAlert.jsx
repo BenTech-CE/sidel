@@ -13,6 +13,7 @@ const IndividualAlert = () => {
   const [alert, setAlert] = useState(null);
   const [loading, setLoading] = useState(false);
   const [emailSend, setEmailSend] = useState(false);
+  const [settings, setSettings] = useState();
 
   useEffect(() => {
     async function getAlert() {
@@ -33,6 +34,14 @@ const IndividualAlert = () => {
       }, [2000])
     }
   }, [emailSend]);
+
+    useEffect(() => {
+    api.get("/settings").then((response) => {
+      setSettings(response.data);
+    }).catch((e) => {
+      console.log(`Ocorreu um erro ao tentar armazenar as settings: ${e}`)
+    })
+  }, [])
 
   const date = alert ? new Date(alert.timestamp) : null;
 
@@ -80,7 +89,7 @@ const IndividualAlert = () => {
               <p><strong>Data:</strong> {date.toLocaleDateString('pt-BR')}</p>
               <p><strong>Horário:</strong> {date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</p>
               <p className="highlight"><strong>{alert.countHeads} pessoas detectadas</strong></p>
-              <p>Lotação máxima permitida: 4 pessoas</p>
+              <p>Lotação máxima permitida: {settings.headLimit} pessoas</p>
             </div>
 
             <div className="actions">

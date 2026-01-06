@@ -119,7 +119,7 @@ pipeline = InferencePipeline.init_with_workflow(
     api_key=api_key,
     workspace_name="bentech",
     workflow_id="detect-count-and-visualize",
-    video_reference=0, 
+    video_reference=1, 
     max_fps=24,
     video_source_properties={
         "frame_width": 1280,
